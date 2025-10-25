@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 // Backend URL 
-const baseUrl = 'https://phonebook-backend.onrender.com/api/persons'
+const baseUrl = 'https://phonebook-backend-1-2eqv.onrender.com/api/persons'
 
 // API functions
 const getAll = () => {
