@@ -12,8 +12,9 @@ function App() {
     personService.getAll()
       .then(response => {
         if (Array.isArray(response.data)) {
-          setPersons(response.data); // ensure it's always an array
+          setPersons(response.data);
         } else {
+          console.error('Unexpected data:', response.data);
           setPersons([]);
         }
       })
@@ -24,7 +25,7 @@ function App() {
   const handleAdd = (e) => {
     e.preventDefault();
     if (!newName || !newNumber) {
-      alert('Please provide both name and number');
+      alert('Name or Number cannot be empty');
       return;
     }
 
@@ -32,7 +33,9 @@ function App() {
 
     personService.create(person)
       .then(response => {
-        setPersons(prev => prev.concat(response.data)); // add new person
+        if (response.data && response.data._id) {
+          setPersons(persons.concat(response.data));
+        }
       })
       .catch(err => {
         console.error('Error adding person:', err.response?.data);
@@ -45,17 +48,18 @@ function App() {
 
   // Delete person
   const handleDelete = (_id) => {
+    if (!_id) return;
     if (window.confirm('Are you sure you want to delete?')) {
       personService.remove(_id)
-        .then(() => setPersons(prev => prev.filter(p => p._id !== _id)))
+        .then(() => setPersons(persons.filter(p => p && p._id !== _id)))
         .catch(() => alert('Error deleting person'));
     }
   };
 
-  // Filtered list safely
-  const filtered = Array.isArray(persons)
-    ? persons.filter(p => p.name.toLowerCase().includes(filter.toLowerCase()))
-    : [];
+  // Filtered list with safety check
+  const filtered = persons.filter(p =>
+    p && p.name && p.name.toLowerCase().includes(filter.toLowerCase())
+  );
 
   return (
     <div>
