@@ -11,7 +11,11 @@ function App() {
   useEffect(() => {
     personService.getAll()
       .then(response => {
-        setPersons(response.data); // Axios response.data
+        if (Array.isArray(response.data)) {
+          setPersons(response.data); // ensure it's always an array
+        } else {
+          setPersons([]);
+        }
       })
       .catch(() => alert('Error connecting to backend'));
   }, []);
@@ -19,11 +23,16 @@ function App() {
   // Add new person
   const handleAdd = (e) => {
     e.preventDefault();
+    if (!newName || !newNumber) {
+      alert('Please provide both name and number');
+      return;
+    }
+
     const person = { name: newName, number: newNumber };
 
     personService.create(person)
       .then(response => {
-        setPersons(persons.concat(response.data)); // Axios response.data
+        setPersons(prev => prev.concat(response.data)); // add new person
       })
       .catch(err => {
         console.error('Error adding person:', err.response?.data);
@@ -38,15 +47,15 @@ function App() {
   const handleDelete = (_id) => {
     if (window.confirm('Are you sure you want to delete?')) {
       personService.remove(_id)
-        .then(() => setPersons(persons.filter(p => p._id !== _id)))
+        .then(() => setPersons(prev => prev.filter(p => p._id !== _id)))
         .catch(() => alert('Error deleting person'));
     }
   };
 
-  // Filtered list
-  const filtered = persons.filter(p =>
-    p.name.toLowerCase().includes(filter.toLowerCase())
-  );
+  // Filtered list safely
+  const filtered = Array.isArray(persons)
+    ? persons.filter(p => p.name.toLowerCase().includes(filter.toLowerCase()))
+    : [];
 
   return (
     <div>
