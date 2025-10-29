@@ -7,84 +7,97 @@ function App() {
   const [newNumber, setNewNumber] = useState('');
   const [filter, setFilter] = useState('');
 
-  // Fetch all persons from backend
+  // 🔹 Fetch all persons on load
   useEffect(() => {
-    personService.getAll()
+    personService
+      .getAll()
       .then(response => {
-        if (Array.isArray(response.data)) {
-          setPersons(response.data);
-        } else {
-          console.error('Unexpected data:', response.data);
-          setPersons([]);
-        }
+        console.log('Fetched:', response.data);
+        setPersons(response.data || []); // Handle undefined case
       })
-      .catch(() => alert('Error connecting to backend'));
+      .catch(err => {
+        console.error('Error fetching data:', err);
+        alert('Error connecting to backend');
+      });
   }, []);
 
-  // Add new person
+  // 🔹 Add new person
   const handleAdd = (e) => {
     e.preventDefault();
-    if (!newName || !newNumber) {
-      alert('Name or Number cannot be empty');
-      return;
-    }
-
     const person = { name: newName, number: newNumber };
 
-    personService.create(person)
+    personService
+      .create(person)
       .then(response => {
-        if (response.data && response.data._id) {
-          setPersons(persons.concat(response.data));
-        }
+        setPersons(persons.concat(response.data)); // add new data
+        setNewName('');
+        setNewNumber('');
       })
       .catch(err => {
         console.error('Error adding person:', err.response?.data);
         alert(err.response?.data?.error || 'Error adding person');
       });
-
-    setNewName('');
-    setNewNumber('');
   };
 
-  // Delete person
-  const handleDelete = (_id) => {
-    if (!_id) return;
-    if (window.confirm('Are you sure you want to delete?')) {
-      personService.remove(_id)
-        .then(() => setPersons(persons.filter(p => p && p._id !== _id)))
-        .catch(() => alert('Error deleting person'));
-    }
-  };
+  const handleDelete = (id) => {
+  if (window.confirm('Are you sure you want to delete?')) {
+    personService.remove(id)
+      .then(() => setPersons(persons.filter(p => p._id !== id)))
+      .catch(err => {
+        console.error('Error deleting:', err);
+        alert('Delete failed — check backend logs');
+      });
+  }
+};
 
-  // Filtered list with safety check
-  const filtered = persons.filter(p =>
-    p && p.name && p.name.toLowerCase().includes(filter.toLowerCase())
+  // 🔹 Filter logic
+  const filtered = persons.filter(
+    p => p.name && p.name.toLowerCase().includes(filter.toLowerCase())
   );
 
   return (
-    <div>
-      <h2>Phonebook</h2>
+    <div style={{ padding: '20px' }}>
+      <h2>📞 Phonebook</h2>
 
+      {/* Filter */}
       <div>
-        Filter shown with: <input value={filter} onChange={(e) => setFilter(e.target.value)} />
+        <strong>Filter:</strong>{' '}
+        <input
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          placeholder="Search by name..."
+        />
       </div>
 
+      {/* Add new person */}
       <h3>Add a new</h3>
       <form onSubmit={handleAdd}>
         <div>
-          Name: <input value={newName} onChange={(e) => setNewName(e.target.value)} />
+          Name:{' '}
+          <input
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            placeholder="Enter name"
+          />
         </div>
         <div>
-          Number: <input value={newNumber} onChange={(e) => setNewNumber(e.target.value)} />
+          Number:{' '}
+          <input
+            value={newNumber}
+            onChange={(e) => setNewNumber(e.target.value)}
+            placeholder="Enter number"
+          />
         </div>
-        <button type="submit">Add</button>
+        <button type="submit" style={{ marginTop: '8px' }}>Add</button>
       </form>
 
+      {/* Display persons */}
       <h3>Numbers</h3>
       <ul>
         {filtered.map(p => (
           <li key={p._id}>
-            {p.name} {p.number} <button onClick={() => handleDelete(p._id)}>Delete</button>
+            {p.name} — {p.number}{' '}
+            <button onClick={() => handleDelete(p._id)}>Delete</button>
           </li>
         ))}
       </ul>
